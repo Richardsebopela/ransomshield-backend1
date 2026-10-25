@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RansomShield ZA | Security Operations Dashboard</title>
+    <!-- Google Fonts & Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                <span class="font-bold text-lg tracking-wider text-white">RANSOMSHIELD <span class="text-red-500">ZA</span></span>
+            </div>
+            <div class="text-xs px-3 py-1 bg-slate-800 text-slate-400 rounded-full border border-slate-700">
+                Backend Status: <span id="server-status" class="text-amber-400 font-medium">Connecting...</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="max-w-7xl mx-auto px-6 py-10 flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
+        
+        <!-- Section 1: Heuristic Threat Scanning -->
+        <section class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl flex flex-col justify-between">
+            <div>
+                <div class="flex items-center space-x-2 mb-4">
+                    <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    <h2 class="text-xl font-semibold text-white">Heuristic Threat Scanner</h2>
+                </div>
+                <p class="text-sm text-slate-400 mb-6">Analyze system scripts, file hashes, or suspicious text payloads against ransomware heuristics.</p>
+                
+                <form id="scan-form" class="space-y-4">
+                    <div>
+                        <label class="block text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2">Payload / Indicator Data</label>
+                        <textarea id="scan-payload" rows="4" required placeholder="Paste file content, hashes, or behavior logs here..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm text-slate-200 focus:outline-none focus:border-red-500 transition-colors"></textarea>
+                    </div>
+                    <button type="submit" class="w-full bg-red-600 hover:bg-red-500 text-white font-medium py-2.5 rounded-lg transition-colors text-sm shadow-lg shadow-red-950/50">Run Heuristic Scan</button>
+                </form>
+            </div>
+
+            <!-- Scan Output Box -->
+            <div id="scan-result-container" class="mt-6 hidden bg-slate-950 border border-slate-800 rounded-lg p-4">
+                <span class="text-xs uppercase tracking-wider text-slate-500 font-semibold block mb-1">Analysis Output</span>
+                <pre id="scan-output" class="text-xs text-emerald-400 font-mono whitespace-pre-wrap"></pre>
+            </div>
+        </section>
+
+        <!-- Section 2: Incident Reporting & Live Feed -->
+        <section class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl flex flex-col justify-between">
+            <div>
+                <div class="flex items-center space-x-2 mb-4">
+                    <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    <h2 class="text-xl font-semibold text-white">Incident Reporting & Logs</h2>
+                </div>
+                <p class="text-sm text-slate-400 mb-6">Submit live security events or inspect historical logs recorded by the backend.</p>
+                
+                <form id="report-form" class="space-y-4">
+                    <div>
+                        <label class="block text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2">Incident Description / Details</label>
+                        <input type="text" id="report-text" required placeholder="e.g., Suspicious extension renaming on drive D:" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm text-slate-200 focus:outline-none focus:border-amber-500 transition-colors">
+                    </div>
+                    <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 text-slate-950 font-semibold py-2.5 rounded-lg transition-colors text-sm shadow-lg shadow-amber-950/50">Submit Incident Log</button>
+                </form>
+            </div>
+
+            <!-- Reports List Table/Box -->
+            <div class="mt-6">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Logged Incidents</span>
+                    <button onclick="fetchReports()" class="text-xs text-slate-400 hover:text-white underline">Refresh Feed</button>
+                </div>
+                <div id="reports-list" class="bg-slate-950 border border-slate-800 rounded-lg p-3 h-32 overflow-y-auto text-xs font-mono text-slate-300 space-y-2">
+                    <span class="text-slate-600">Loading incident history...</span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 py-4 text-center text-xs text-slate-500">
+        RansomShield ZA &copy; 2026 &bull; Secure Enterprise Threat Defense
+    </footer>
+
+    <!-- Frontend Logic Script -->
+    <script>
+        const API_URL = "http://localhost:5000"; // Connects to your local Node.js backend
+
+        // 1. Check Server Health on Load
+        async function checkServerHealth() {
+            try {
+                const res = await fetch(`${API_URL}/`);
+                if (res.ok) {
+                    document.getElementById('server-status').innerText = "Online (Port 5000)";
+                    document.getElementById('server-status').className = "text-emerald-400 font-medium";
+                } else {
+                    throw new Error();
+                }
+            } catch (err) {
+                document.getElementById('server-status').innerText = "Offline (Run 'node server.js')";
+                document.getElementById('server-status').className = "text-red-400 font-medium";
+            }
+        }
+
+        // 2. Handle Heuristic Scan Form Submission
+        document.getElementById('scan-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = document.getElementById('scan-payload').value;
+            const outputContainer = document.getElementById('scan-result-container');
+            const outputElement = document.getElementById('scan-output');
+
+            outputContainer.classList.remove('hidden');
+            outputElement.innerText = "Analyzing payload through heuristics engine...";
+
+            try {
+                const res = await fetch(`${API_URL}/api/check`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: payload })
+                });
+                const result = await res.json();
+                outputElement.innerText = JSON.stringify(result, null, 2);
+            } catch (err) {
+                outputElement.innerText = "Error: Failed to reach backend service.";
+            }
+        });
+
+        // 3. Handle Incident Report Submission
+        document.getElementById('report-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = document.getElementById('report-text').value;
+
+            try {
+                const res = await fetch(`${API_URL}/api/reports`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ incident: text })
+                });
+                if (res.ok) {
+                    document.getElementById('report-text').value = '';
+                    fetchReports(); // Refresh list
+                }
+            } catch (err) {
+                alert("Failed to submit incident report.");
+            }
+        });
+
+        // 4. Fetch Logged Incidents
+        async function fetchReports() {
+            const listContainer = document.getElementById('reports-list');
+            try {
+                const res = await fetch(`${API_URL}/api/reports`);
+                const data = await res.json();
+                
+                if (data.reports && data.reports.length > 0) {
+                    listContainer.innerHTML = data.reports.map((rep, idx) => 
+                        `<div class="border-b border-slate-900 pb-1">[#${idx+1}] ${JSON.stringify(rep)}</div>`
+                    ).join('');
+                } else {
+                    listContainer.innerHTML = '<span class="text-slate-600">No security incidents logged yet.</span>';
+                }
+            } catch (err) {
+                listContainer.innerHTML = '<span class="text-red-500">Could not fetch reports from backend.</span>';
+            }
+        }
+
+        // Run checks on page load
+        checkServerHealth();
+        fetchReports();
+    </script>
+</body>
+</html>
