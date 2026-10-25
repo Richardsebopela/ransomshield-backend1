@@ -1,102 +1,73 @@
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Middleware
-app.use(cors());
 app.use(express.json());
+app.use(cors());
 
-// Temporary In-Memory Database Arrays (for prototyping)
-const reports = [];
-const scannedItems = [];
+// In-memory database for demo & hackathon presentation
+let reportsLog = [];
+let knownThreats = ["ransom", "encrypt", "extortion", "payload", "malware", "lockbit", "hack"];
 
-// 1. Health Check Route
+// 1. Root Health Check Endpoint (Returns 200 OK so frontend shows "Online")
 app.get('/', (req, res) => {
-  res.json({
-    status: 'online',
-    service: 'RansomShield ZA API',
-    version: '1.0.0'
-  });
+    res.json({ status: "RansomShield ZA Backend Active", version: "1.0.0" });
 });
 
-// 2. Simulated Link / Message Check Endpoint
+// 2. Heuristic Threat Scanner Endpoint
 app.post('/api/check', (req, res) => {
-  const { input } = req.body;
+    const { data } = req.body;
+    
+    if (!data) {
+        return res.status(400).json({ error: "No payload provided for scanning." });
+    }
 
-  if (!input) {
-    return res.status(400).json({ error: 'Input text or link is required.' });
-  }
+    // Simple heuristic analysis simulation
+    const lowerData = data.toLowerCase();
+    const matchedThreats = knownThreats.filter(keyword => lowerData.includes(keyword));
+    const isDangerous = matchedThreats.length > 0 || lowerData.length > 100;
 
-  const lowerInput = input.toLowerCase();
-  let riskScore = 10;
-  let verdict = 'Safe';
-  let matchedHeuristics = [];
+    const analysisResult = {
+        verdict: isDangerous ? "HIGH RISK / MALICIOUS" : "SAFE / LOW RISK",
+        threatScore: isDangerous ? 88 : 12,
+        indicatorsMatched: matchedThreats.length > 0 ? matchedThreats : ["None detected"],
+        recommendation: isDangerous 
+            ? "Isolate affected endpoint immediately and review POPIA incident logging protocols." 
+            : "No immediate threat indicators found in heuristic scan.",
+        timestamp: new Date().toISOString()
+    };
 
-  if (lowerInput.includes('urgent') || lowerInput.includes('win') || lowerInput.includes('prize') || lowerInput.includes('verify')) {
-    riskScore = 75;
-    verdict = 'Suspicious';
-    matchedHeuristics.push('Contains high-pressure or urgency keywords');
-  }
-
-  if (lowerInput.includes('http://') || lowerInput.includes('bit.ly') || lowerInput.includes('free-gift')) {
-    riskScore = 90;
-    verdict = 'Dangerous';
-    matchedHeuristics.push('Unencrypted protocol or known shortened link pattern');
-  }
-
-  const scanResult = {
-    id: Date.now().toString(),
-    input,
-    riskScore,
-    verdict,
-    matchedHeuristics,
-    timestamp: new Date().toISOString()
-  };
-
-  scannedItems.push(scanResult);
-  res.json(scanResult);
+    res.json(analysisResult);
 });
 
-// 3. Submit an Incident Report Endpoint
+// 3. Post Incident Report Endpoint
 app.post('/api/reports', (req, res) => {
-  const { fullName, phoneNumber, issueType, websiteUrl, details } = req.body;
+    const { incident } = req.body;
 
-  if (!fullName || !phoneNumber || !issueType || !details) {
-    return res.status(400).json({ error: 'Please fill in all required fields.' });
-  }
+    if (!incident) {
+        return res.status(400).json({ error: "Incident details required." });
+    }
 
-  const newReport = {
-    id: Date.now().toString(),
-    fullName,
-    phoneNumber,
-    issueType,
-    websiteUrl: websiteUrl || 'N/A',
-    details,
-    status: 'Pending Review',
-    createdAt: new Date().toISOString()
-  };
+    const newReport = {
+        id: reportsLog.length + 1,
+        details: incident,
+        status: "Pending Investigation",
+        loggedAt: new Date().toLocaleTimeString()
+    };
 
-  reports.push(newReport);
-
-  res.status(201).json({
-    success: true,
-    message: 'Incident report submitted successfully. Our security team will review it.',
-    reportId: newReport.id
-  });
+    reportsLog.unshift(newReport); // Add to the beginning of the array
+    res.status(201).json({ success: true, report: newReport });
 });
 
-// 4. Get All Incident Reports (For Admin Dashboard)
+// 4. Get Logged Incidents Endpoint
 app.get('/api/reports', (req, res) => {
-  res.json({
-    count: reports.length,
-    reports
-  });
+    res.json({ reports: reportsLog });
 });
 
 // Start Server
 app.listen(PORT, () => {
-  console.log(`RansomShield ZA backend running on http://localhost:${PORT}`);
+    console.log(`🛡️ RansomShield ZA Backend running successfully on http://localhost:${PORT}`);
 }); 
